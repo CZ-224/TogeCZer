@@ -1,0 +1,17 @@
+# Local PostgreSQL for couples-connection MVP
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: couples-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: couples
+      POSTGRES_PASSWORD: couples_dev
+      POSTGRES_DB: couples_app
+    ports:
+      - "5432:5432"
+    volumes:
+      - couples_pg_data:/var/lib/postgresql/data
+
+volumes:
+  couples_pg_data:

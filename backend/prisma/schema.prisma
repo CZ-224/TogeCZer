@@ -1,0 +1,64 @@
+// Prisma schema — couples connection app (MVP)
+// Map to snake_case columns per requested DB design.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  roomsCreated Room[]       @relation("RoomCreator")
+  memberships  RoomMember[]
+  moods        MoodStatus[]
+}
+
+model Room {
+  id          String   @id @default(cuid())
+  inviteCode  String   @unique @map("invite_code")
+  createdById String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  gameType    String?  @map("game_type")
+  gameStatus  String?  @map("game_status")
+  gameState   Json?    @map("game_state")
+  gameTurnUserId   String?   @map("game_turn_user_id")
+  gameWinnerUserId String?   @map("game_winner_user_id")
+  gameUpdatedAt    DateTime? @map("game_updated_at")
+
+  createdBy User         @relation("RoomCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  members   RoomMember[]
+  moods     MoodStatus[]
+}
+
+model RoomMember {
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+  roomId String @map("room_id")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roomId])
+  @@index([roomId])
+}
+
+model MoodStatus {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  roomId    String   @map("room_id")
+  moodType  String   @map("mood_type")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roomId])
+}

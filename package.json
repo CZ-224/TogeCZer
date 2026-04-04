@@ -1,0 +1,18 @@
+{
+  "name": "couples-connection-monorepo",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "dev": "concurrently -n backend,frontend -c blue,magenta \"npm run dev -w couples-backend\" \"npm run dev -w couples-frontend\"",
+    "migrate": "npm run prisma:migrate -w couples-backend",
+    "generate": "npm run prisma:generate -w couples-backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

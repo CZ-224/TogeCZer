@@ -1,0 +1,63 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isRoomMember(roomId) {
+      return signedIn()
+        && request.auth.uid in get(/databases/$(database)/documents/rooms/$(roomId)).data.members;
+    }
+
+    match /users/{uid} {
+      allow read, write: if isSelf(uid);
+    }
+
+    match /inviteLookup/{code} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['roomId'])
+        && exists(/databases/$(database)/documents/rooms/$(request.resource.data.roomId))
+        && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomId)).data.createdBy == request.auth.uid
+        && get(/databases/$(database)/documents/rooms/$(request.resource.data.roomId)).data.inviteCode == code;
+      allow update, delete: if false;
+    }
+
+    match /rooms/{roomId} {
+      allow read: if signedIn() && request.auth.uid in resource.data.members;
+
+      allow create: if signedIn()
+        && request.resource.data.members is list
+        && request.resource.data.members.size() == 1
+        && request.resource.data.members[0] == request.auth.uid
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.inviteCode is string;
+
+      // MVP-native room updates: room members may update the shared room doc once the room exists.
+      // This enables synced game state from Swift transactions.
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.members
+        && request.resource.data.members.size() <= 2
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.inviteCode == resource.data.inviteCode;
+
+      allow delete: if false;
+
+      match /moods/{userId} {
+        allow read: if isRoomMember(roomId);
+
+        // MVP-native mood note + one reply flow. Any room member may write mood docs,
+        // but only room members in a full two-person room may do so.
+        allow write: if isRoomMember(roomId)
+          && get(/databases/$(database)/documents/rooms/$(roomId)).data.members.size() == 2;
+      }
+    }
+  }
+}

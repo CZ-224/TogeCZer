@@ -1,0 +1,10 @@
+# Railway: if the dashboard "Build Command" is empty, Railpack uses `npm run build`.
+# This must run `prisma generate` before `tsc` (see package.json "build").
+[env]
+PORT = "8080"
+
+[build]
+buildCommand = "npm run build"
+
+[deploy]
+startCommand = "npx prisma migrate deploy && npm start"

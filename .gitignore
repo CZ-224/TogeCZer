@@ -1,0 +1,24 @@
+node_modules/
+.env
+backend/.env
+frontend/.env.local
+frontend/.env*.local
+dist/
+.next/
+*.log
+.DS_Store
+
+# Never commit Firebase iOS secrets to a public repo
+GoogleService-Info.plist
+ios/Together/GoogleService-Info.plist
+
+# Firebase
+firebase/functions/lib/
+firebase/functions/node_modules/
+.firebase/
+firebase-debug.log
+
+# Xcode (generated locally)
+ios/*.xcodeproj/
+ios/*.xcworkspace/
+**/xcuserdata/
